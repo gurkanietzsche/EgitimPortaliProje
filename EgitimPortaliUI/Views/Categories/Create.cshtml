@@ -1,0 +1,80 @@
+﻿@{
+    ViewData["Title"] = "Kategori Oluştur";
+}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Yeni Kategori Oluştur</h1>
+    <p class="mb-4">Bu sayfada yeni bir kategori oluşturabilirsiniz.</p>
+
+    <!-- Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Kategori Bilgileri</h6>
+        </div>
+        <div class="card-body">
+            <form id="createCategoryForm">
+                <div class="form-group">
+                    <label for="name">Kategori Adı</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Açıklama</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+                <div class="alert alert-success" id="successMessage" style="display: none;">
+                    Kategori başarıyla oluşturuldu!
+                </div>
+                <div class="alert alert-danger" id="errorMessage" style="display: none;">
+                    Kategori oluşturulurken bir hata oluştu!
+                </div>
+                <div class="form-group">
+                    <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">Geri Dön</a>
+                    <button type="submit" class="btn btn-primary">Kategori Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script>
+            $(document).ready(function () {
+                var apiBaseUrl = '@ViewBag.ApiBaseUrl';
+
+                $('#createCategoryForm').submit(function (e) {
+                    e.preventDefault();
+
+                    var categoryData = {
+                        name: $('#name').val(),
+                        description: $('#description').val()
+                    };
+
+                    $.ajax({
+                        url: apiBaseUrl + '/api/Categories',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(categoryData),
+                        success: function (response) {
+                            $('#successMessage').show();
+                            $('#errorMessage').hide();
+
+                            // Form alanlarını temizle
+                            $('#name').val('');
+                            $('#description').val('');
+
+                            // 2 saniye sonra listeye yönlendir
+                            setTimeout(function() {
+                                window.location.href = '@Url.Action("Index", "Categories")';
+                            }, 2000);
+                        },
+                        error: function (xhr) {
+                            console.log(xhr);
+                            $('#errorMessage').text('Kategori oluşturulurken bir hata oluştu: ' + xhr.responseText).show();
+                            $('#successMessage').hide();
+                        }
+                    });
+                });
+            });
+        </script>
+}

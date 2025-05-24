@@ -1,0 +1,240 @@
+﻿@{
+    ViewData["Title"] = "Profilim";
+}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Profil Bilgilerim</h1>
+    <p class="mb-4">Bu sayfada profil bilgilerinizi görüntüleyebilir ve güncelleyebilirsiniz.</p>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Profile Image -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Profil Resmi</h6>
+                </div>
+                <div class="card-body text-center">
+                    <img id="profileImage" src="/sbadmin2/img/undraw_profile.svg" alt="Profil Resmi" class="img-profile rounded-circle" style="width: 150px; height: 150px;">
+                    <div class="mt-3">
+                        <form id="imageForm" class="mt-2">
+                            <div class="form-group">
+                                <input type="url" class="form-control" id="profileImageUrl" placeholder="Profil Resmi URL">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Resmi Güncelle</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <!-- Profile Details -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Kullanıcı Bilgileri</h6>
+                </div>
+                <div class="card-body">
+                    <form id="profileForm">
+                        <div class="form-group row">
+                            <div class="col-sm-6 mb-3 mb-sm-0">
+                                <label for="firstName">Ad</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="lastName">Soyad</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-posta</label>
+                            <input type="email" class="form-control" id="email" name="email" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="userName">Kullanıcı Adı</label>
+                            <input type="text" class="form-control" id="userName" name="userName" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="registrationDate">Kayıt Tarihi</label>
+                            <input type="text" class="form-control" id="registrationDate" name="registrationDate" readonly>
+                        </div>
+                        <div class="alert alert-success" id="successMessage" style="display: none;">
+                            Profil bilgileri başarıyla güncellendi!
+                        </div>
+                        <div class="alert alert-danger" id="errorMessage" style="display: none;">
+                            Profil bilgileri güncellenirken bir hata oluştu!
+                        </div>
+                        <button type="submit" class="btn btn-primary">Bilgileri Güncelle</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Password Change -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Şifre Değiştir</h6>
+                </div>
+                <div class="card-body">
+                    <form id="passwordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Mevcut Şifre</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-6 mb-3 mb-sm-0">
+                                <label for="newPassword">Yeni Şifre</label>
+                                <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="confirmPassword">Şifre Tekrar</label>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                            </div>
+                        </div>
+                        <div class="alert alert-success" id="passwordSuccessMessage" style="display: none;">
+                            Şifreniz başarıyla güncellendi!
+                        </div>
+                        <div class="alert alert-danger" id="passwordErrorMessage" style="display: none;">
+                            Şifre güncellenirken bir hata oluştu!
+                        </div>
+                        <button type="submit" class="btn btn-primary">Şifreyi Değiştir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script>
+            $(document).ready(function () {
+                var apiBaseUrl = '@ViewBag.ApiBaseUrl';
+                var userId = localStorage.getItem('userId');
+
+                // Kullanıcı bilgilerini getir
+                $.ajax({
+                    url: apiBaseUrl + '/api/Users/' + userId,
+                    type: 'GET',
+                    success: function (user) {
+                        $('#firstName').val(user.firstName);
+                        $('#lastName').val(user.lastName);
+                        $('#email').val(user.email);
+                        $('#userName').val(user.userName);
+                        $('#registrationDate').val(new Date(user.registrationDate).toLocaleString());
+
+                        // Profil resmi
+                        if (user.profileImageUrl) {
+                            $('#profileImage').attr('src', user.profileImageUrl);
+                            $('#profileImageUrl').val(user.profileImageUrl);
+                        }
+                    },
+                    error: function (xhr) {
+                        console.log(xhr);
+                        alert('Kullanıcı bilgileri alınırken bir hata oluştu!');
+                    }
+                });
+
+                // Profil formu gönderimi
+                $('#profileForm').submit(function (e) {
+                    e.preventDefault();
+
+                    var userData = {
+                        id: userId,
+                        firstName: $('#firstName').val(),
+                        lastName: $('#lastName').val(),
+                        email: $('#email').val(),
+                        userName: $('#userName').val()
+                    };
+
+                    $.ajax({
+                        url: apiBaseUrl + '/api/Users/' + userId,
+                        type: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(userData),
+                        success: function (response) {
+                            $('#successMessage').show();
+                            $('#errorMessage').hide();
+
+                            // 3 saniye sonra başarı mesajını gizle
+                            setTimeout(function() {
+                                $('#successMessage').hide();
+                            }, 3000);
+                        },
+                        error: function (xhr) {
+                            console.log(xhr);
+                            $('#errorMessage').text('Profil bilgileri güncellenirken bir hata oluştu: ' + xhr.responseText).show();
+                            $('#successMessage').hide();
+                        }
+                    });
+                });
+
+                // Profil resmi formu gönderimi
+                $('#imageForm').submit(function (e) {
+                    e.preventDefault();
+
+                    var imageData = {
+                        id: userId,
+                        profileImageUrl: $('#profileImageUrl').val()
+                    };
+
+                    $.ajax({
+                        url: apiBaseUrl + '/api/Users/' + userId + '/profileimage',
+                        type: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(imageData),
+                        success: function (response) {
+                            $('#profileImage').attr('src', $('#profileImageUrl').val());
+                            alert('Profil resmi başarıyla güncellendi!');
+                        },
+                        error: function (xhr) {
+                            console.log(xhr);
+                            alert('Profil resmi güncellenirken bir hata oluştu!');
+                        }
+                    });
+                });
+
+                // Şifre değiştirme formu gönderimi
+                $('#passwordForm').submit(function (e) {
+                    e.preventDefault();
+
+                    // Şifreleri kontrol et
+                    if ($('#newPassword').val() !== $('#confirmPassword').val()) {
+                        $('#passwordErrorMessage').text('Yeni şifreler eşleşmiyor!').show();
+                        $('#passwordSuccessMessage').hide();
+                        return;
+                    }
+
+                    var passwordData = {
+                        userId: userId,
+                        currentPassword: $('#currentPassword').val(),
+                        newPassword: $('#newPassword').val()
+                    };
+
+                    $.ajax({
+                        url: apiBaseUrl + '/api/Users/' + userId + '/changepassword',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(passwordData),
+                        success: function (response) {
+                            $('#passwordSuccessMessage').show();
+                            $('#passwordErrorMessage').hide();
+
+                            // Form alanlarını temizle
+                            $('#currentPassword').val('');
+                            $('#newPassword').val('');
+                            $('#confirmPassword').val('');
+
+                            // 3 saniye sonra başarı mesajını gizle
+                            setTimeout(function() {
+                                $('#passwordSuccessMessage').hide();
+                            }, 3000);
+                        },
+                        error: function (xhr) {
+                            console.log(xhr);
+                            $('#passwordErrorMessage').text('Şifre güncellenirken bir hata oluştu: ' + xhr.responseText).show();
+                            $('#passwordSuccessMessage').hide();
+                        }
+                    });
+                });
+            });
+        </script>
+}

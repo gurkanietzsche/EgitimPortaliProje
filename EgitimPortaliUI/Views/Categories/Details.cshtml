@@ -1,0 +1,142 @@
+﻿@{
+    ViewData["Title"] = "Kategori Detayları";
+    var categoryId = ViewBag.CategoryId;
+}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Kategori Detayları</h1>
+    <p class="mb-4">Bu sayfada kategori detaylarını görüntüleyebilirsiniz.</p>
+
+    <!-- Category Details -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Kategori Bilgileri</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <td id="categoryId"></td>
+                        </tr>
+                        <tr>
+                            <th>Ad</th>
+                            <td id="categoryName"></td>
+                        </tr>
+                        <tr>
+                            <th>Açıklama</th>
+                            <td id="categoryDescription"></td>
+                        </tr>
+                        <tr>
+                            <th>Oluşturulma Tarihi</th>
+                            <td id="categoryCreatedAt"></td>
+                        </tr>
+                        <tr>
+                            <th>Son Güncelleme</th>
+                            <td id="categoryUpdatedAt"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">Geri Dön</a>
+                <a href="@Url.Action("Edit", "Categories", new { id = categoryId })" class="btn btn-primary">Düzenle</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses in Category -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Bu Kategorideki Kurslar</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="coursesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Kurs Adı</th>
+                            <th>Açıklama</th>
+                            <th>Oluşturulma Tarihi</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesTableBody">
+                        <!-- Veriler JavaScript ile doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/sbadmin2/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/sbadmin2/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = '@ViewBag.ApiBaseUrl';
+            var categoryId = '@categoryId';
+
+            // Kategori detaylarını getir
+            $.ajax({
+                url: apiBaseUrl + '/api/Categories/' + categoryId,
+                type: 'GET',
+                success: function (category) {
+                    $('#categoryId').text(category.id);
+                    $('#categoryName').text(category.name);
+                    $('#categoryDescription').text(category.description || '-');
+                    $('#categoryCreatedAt').text(new Date(category.createdAt).toLocaleString());
+                    $('#categoryUpdatedAt').text(category.updatedAt ? new Date(category.updatedAt).toLocaleString() : '-');
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    alert('Kategori bilgileri alınırken bir hata oluştu!');
+                }
+            });
+
+            // Kategoriye ait kursları getir
+            $.ajax({
+                url: apiBaseUrl + '/api/Courses/bycategory/' + categoryId,
+                type: 'GET',
+                success: function (data) {
+                    var tableBody = $('#coursesTableBody');
+                    tableBody.empty();
+
+                    if (data.length === 0) {
+                        tableBody.append('<tr><td colspan="5" class="text-center">Bu kategoride henüz kurs bulunmamaktadır.</td></tr>');
+                    } else {
+                        $.each(data, function (index, course) {
+                            var row = '<tr>' +
+                                '<td>' + course.id + '</td>' +
+                                '<td>' + course.title + '</td>' +
+                                '<td>' + (course.description ? course.description.substring(0, 50) + '...' : '-') + '</td>' +
+                                '<td>' + new Date(course.createdAt).toLocaleDateString() + '</td>' +
+                                '<td>' +
+                                '<a href="@Url.Action("Details", "Courses")/' + course.id + '" class="btn btn-info btn-sm">' +
+                                '<i class="fas fa-info-circle"></i> Detay</a>' +
+                                '</td>' +
+                                '</tr>';
+                            tableBody.append(row);
+                        });
+                    }
+
+                    // DataTables'ı başlat
+                    $('#coursesTable').DataTable({
+                        "language": {
+                            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Turkish.json"
+                        }
+                    });
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    alert('Kurs listesi alınırken bir hata oluştu!');
+                }
+            });
+        });
+    </script>
+}

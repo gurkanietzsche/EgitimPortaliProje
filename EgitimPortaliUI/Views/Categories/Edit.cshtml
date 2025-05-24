@@ -1,0 +1,95 @@
+﻿@{
+    ViewData["Title"] = "Kategori Düzenle";
+    var categoryId = ViewBag.CategoryId;
+}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Kategori Düzenle</h1>
+    <p class="mb-4">Bu sayfada kategori bilgilerini düzenleyebilirsiniz.</p>
+
+    <!-- Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Kategori Bilgileri</h6>
+        </div>
+        <div class="card-body">
+            <form id="editCategoryForm">
+                <input type="hidden" id="categoryId" value="@categoryId" />
+                <div class="form-group">
+                    <label for="name">Kategori Adı</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Açıklama</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+                <div class="alert alert-success" id="successMessage" style="display: none;">
+                    Kategori başarıyla güncellendi!
+                </div>
+                <div class="alert alert-danger" id="errorMessage" style="display: none;">
+                    Kategori güncellenirken bir hata oluştu!
+                </div>
+                <div class="form-group">
+                    <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">Geri Dön</a>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = '@ViewBag.ApiBaseUrl';
+            var categoryId = $('#categoryId').val();
+
+            // Kategori bilgilerini getir
+            $.ajax({
+                url: apiBaseUrl + '/api/Categories/' + categoryId,
+                type: 'GET',
+                success: function (category) {
+                    $('#name').val(category.name);
+                    $('#description').val(category.description);
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    alert('Kategori bilgileri alınırken bir hata oluştu!');
+                }
+            });
+
+            // Form gönderimi
+            $('#editCategoryForm').submit(function (e) {
+                e.preventDefault();
+
+                var categoryData = {
+                    id: categoryId,
+                    name: $('#name').val(),
+                    description: $('#description').val()
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + '/api/Categories/' + categoryId,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(categoryData),
+                    success: function (response) {
+                        $('#successMessage').show();
+                        $('#errorMessage').hide();
+
+                        // 2 saniye sonra listeye yönlendir
+                        setTimeout(function() {
+                            window.location.href = '@Url.Action("Index", "Categories")';
+                        }, 2000);
+                    },
+                    error: function (xhr) {
+                        console.log(xhr);
+                        $('#errorMessage').text('Kategori güncellenirken bir hata oluştu: ' + xhr.responseText).show();
+                        $('#successMessage').hide();
+                    }
+                });
+            });
+        });
+    </script>
+}

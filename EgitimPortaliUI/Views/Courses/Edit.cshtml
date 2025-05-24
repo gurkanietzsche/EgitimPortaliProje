@@ -1,0 +1,135 @@
+﻿@{
+    ViewData["Title"] = "Kurs Düzenle";
+    var courseId = ViewBag.CourseId;
+}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <h1 class="h3 mb-2 text-gray-800">Kurs Düzenle</h1>
+    <p class="mb-4">Bu sayfada kurs bilgilerini düzenleyebilirsiniz.</p>
+
+    <!-- Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Kurs Bilgileri</h6>
+        </div>
+        <div class="card-body">
+            <form id="editCourseForm">
+                <input type="hidden" id="courseId" value="@courseId" />
+                <div class="form-group">
+                    <label for="title">Kurs Başlığı</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Açıklama</label>
+                    <textarea class="form-control" id="description" name="description" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="categoryId">Kategori</label>
+                    <select class="form-control" id="categoryId" name="categoryId" required>
+                        <option value="">Kategori Seçin</option>
+                        <!-- Kategoriler AJAX ile doldurulacak -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="imageUrl">Görsel URL</label>
+                    <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="alert alert-success" id="successMessage" style="display: none;">
+                    Kurs başarıyla güncellendi!
+                </div>
+                <div class="alert alert-danger" id="errorMessage" style="display: none;">
+                    Kurs güncellenirken bir hata oluştu!
+                </div>
+                <div class="form-group">
+                    <a href="@Url.Action("Index", "Courses")" class="btn btn-secondary">Geri Dön</a>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = '@ViewBag.ApiBaseUrl';
+            var courseId = $('#courseId').val();
+
+            // Kategorileri getir ve select'e doldur
+            $.ajax({
+                url: apiBaseUrl + '/api/Categories',
+                type: 'GET',
+                success: function (categories) {
+                    var select = $('#categoryId');
+
+                    $.each(categories, function (index, category) {
+                        select.append('<option value="' + category.id + '">' + category.name + '</option>');
+                    });
+
+                    // Kurs bilgilerini getir
+                    getCourseDetails();
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    alert('Kategoriler alınırken bir hata oluştu!');
+                }
+            });
+
+            // Kurs bilgilerini getir
+            function getCourseDetails() {
+                $.ajax({
+                    url: apiBaseUrl + '/api/Courses/' + courseId,
+                    type: 'GET',
+                    success: function (course) {
+                        $('#title').val(course.title);
+                        $('#description').val(course.description);
+                        $('#categoryId').val(course.categoryId);
+                        $('#imageUrl').val(course.imageUrl);
+                    },
+                    error: function (xhr) {
+                        console.log(xhr);
+                        alert('Kurs bilgileri alınırken bir hata oluştu!');
+                    }
+                });
+            }
+
+            // Form gönderimi
+            $('#editCourseForm').submit(function (e) {
+                e.preventDefault();
+
+                var userId = localStorage.getItem('userId');
+
+                var courseData = {
+                    id: courseId,
+                    title: $('#title').val(),
+                    description: $('#description').val(),
+                    categoryId: $('#categoryId').val(),
+                    imageUrl: $('#imageUrl').val(),
+                    instructorId: userId
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + '/api/Courses/' + courseId,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(courseData),
+                    success: function (response) {
+                        $('#successMessage').show();
+                        $('#errorMessage').hide();
+
+                        // 2 saniye sonra listeye yönlendir
+                        setTimeout(function() {
+                            window.location.href = '@Url.Action("Index", "Courses")';
+                        }, 2000);
+                    },
+                    error: function (xhr) {
+                        console.log(xhr);
+                        $('#errorMessage').text('Kurs güncellenirken bir hata oluştu: ' + xhr.responseText).show();
+                        $('#successMessage').hide();
+                    }
+                });
+            });
+        });
+    </script>
+}
